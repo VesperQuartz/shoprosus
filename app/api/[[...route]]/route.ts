@@ -55,12 +55,6 @@ app.use("*", async (c, next) => {
   return next();
 });
 
-app.get("/tests", (c) => {
-  return c.json({
-    message: "Hello Next.js!",
-  });
-});
-
 app.get("/cart", async (c) => {
   const user = c.get("user");
   if (!user) return c.json(null, 401);
@@ -111,7 +105,12 @@ app.post(
 
 app.post("/webhook", async (c) => {
   const event = await c.req.json();
-  console.log(event);
+  //TODO secure public webhook
+  if (event.event === "charge.success") {
+    const userId = event.event.metadata.userId;
+    console.log(userId);
+    await clearCart(userId);
+  }
   return c.json({ message: "webhook recieved" });
 });
 
