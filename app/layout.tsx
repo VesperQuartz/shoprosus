@@ -23,7 +23,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log("ENVIRONMENT", process.env.NODE_ENV);
+  console.log("ENVIRONMENT-WHICH", process.env.NODE_ENV);
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body
