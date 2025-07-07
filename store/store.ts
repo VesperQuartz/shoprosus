@@ -18,15 +18,13 @@ export const useCartStore = create<CartState>()(
         setCart: (cart) => set(() => ({ cart })),
         increment: (id) =>
           set((state) => {
-            console.log(id);
-            console.log(state.cart[id]);
-            if (state?.cart && state.cart[id]) {
+            if (state?.cart && state.cart?.[id]) {
               state.cart[id].quantity++;
             }
           }),
         decrement: (id) =>
           set((state) => {
-            if (state?.cart && state.cart[id]) {
+            if (state?.cart && state.cart?.[id]) {
               state.cart[id].quantity--;
             }
           }),
