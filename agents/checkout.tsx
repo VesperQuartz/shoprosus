@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useClearCart } from "@/hooks/api";
 import { formatToNaira } from "@/lib/utils";
 import { makeAssistantToolUI } from "@assistant-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,11 +23,7 @@ export const CheckoutUI = makeAssistantToolUI<
 >({
   toolName: "providePaymentButton",
   render: ({ status, result, args }) => {
-    console.log("STATUS", status);
-    console.log("ARGS", args);
-    console.log("RESULT", result);
     if (status.type === "incomplete" && status.error === "error") {
-      console.log("INCOMPLETE");
       return (
         <div className="text-red-500">Failed to generate payment link</div>
       );
@@ -36,12 +33,13 @@ export const CheckoutUI = makeAssistantToolUI<
         return (
           <div className="flex items-center gap-2">
             <Loader2Icon className="animate-spin" />
-            <span>Generating payment link</span>
+            <span>Generating payment Button</span>
           </div>
         );
       })
       .with("complete", () => {
         const queryClient = useQueryClient();
+        const clearCart = useClearCart();
         return (
           <div className="mt-4 px-8 w-full">
             <Button
@@ -50,11 +48,14 @@ export const CheckoutUI = makeAssistantToolUI<
                 const PaystackPop = await import("@paystack/inline-js");
                 const popup = new PaystackPop.default();
                 popup.resumeTransaction(result?.data.access_code ?? "", {
-                  onSuccess: (data) => {
-                    console.log("Hay", data);
+                  onSuccess: () => {
                     toast.success("transaction was a success");
-                    queryClient.invalidateQueries({
-                      queryKey: ["cart_items"],
+                    clearCart.mutate(undefined, {
+                      onSuccess: () => {
+                        queryClient.invalidateQueries({
+                          queryKey: ["cart_items"],
+                        });
+                      },
                     });
                   },
                 });

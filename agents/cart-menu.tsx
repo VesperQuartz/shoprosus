@@ -49,7 +49,7 @@ export const CartMenuUI = makeAssistantToolUI<never, CartTableSelect[]>({
                   <div className="flex-1 p-2 sm:p-3 flex flex-col justify-center min-w-0">
                     <p
                       className="text-xs sm:text-sm md:text-base font-medium text-white 
-                     line-clamp-2 leading-tight"
+                     leading-tight"
                     >
                       {item.name}
                     </p>

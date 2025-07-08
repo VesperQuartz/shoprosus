@@ -24,7 +24,7 @@ import {
 import to from "await-to-ts";
 import { auth } from "@/lib/auth";
 import { getAvailableRestuarant, getRestuarantMenus } from "@/agents/tools";
-import {} from "@/services/knowlege-graph";
+import { logOrderInGraph } from "@/services/knowlege-graph";
 
 export const runtime = "nodejs";
 
@@ -135,11 +135,15 @@ app.post("/chat", async (c) => {
               }),
             ),
           }),
-          description: "Add the list of selected menu items to cart",
+          description:
+            "Add one or more selected menu items to the user's cart. Use this after the user chooses food or drinks they want to order.",
           execute: async ({ cart }) => {
             console.log("ED", cart);
             const user = c.get("user");
             const [error, result] = await to(addItemsToCart(cart, user?.id));
+            if (user && !error) {
+              await logOrderInGraph({ userId: user.id, cart });
+            }
             if (error) {
               console.error("Error", error);
               throw new Error("Cannot add items to cart");
@@ -148,8 +152,9 @@ app.post("/chat", async (c) => {
           },
         }),
         getUserCart: tool({
-          parameters: z.object({}).describe("no parameters needed").default({}),
-          description: "get items in user cart",
+          parameters: z.object({}).optional(),
+          description:
+            "Retrieve and display all items currently in the user's cart. Use this to show the user what they have added so far.",
           execute: async () => {
             const user = c.get("user");
             console.log("cart", user);
@@ -165,7 +170,8 @@ app.post("/chat", async (c) => {
           parameters: z.object({
             totalAmount: z.number().describe("Total price of items in cart"),
           }),
-          description: "Used to provide payment button for checkout.",
+          description:
+            "Generate a payment link for the user to complete their order. Use this when the user is ready to checkout and pay for their cart.",
           execute: async ({ totalAmount }) => {
             const user = c.get("user");
             const metadata = {
@@ -185,6 +191,16 @@ app.post("/chat", async (c) => {
             return result;
           },
         }),
+        deleteCartItem: tool({
+          parameters: z.object({}).optional(),
+          description:
+            "Remove all items from the user's cart. Use this when the user wants to clear their cart or start over.",
+          execute: async () => {
+            const user = c.get("user");
+            await clearCart(user!.id);
+            return { message: "cart deleted" };
+          },
+        }),
       },
       maxSteps: 3,
       system: `
@@ -196,14 +212,19 @@ app.post("/chat", async (c) => {
       3. Add items to cart
       4. Process payments
       5. Provide personalized recommendations based on user preferences
+      6. Suggest menu items that fit the user's dietary needs using the knowledge graph
 
       Remember to:
       - Be friendly and helpful
       - Ask clarifying questions when needed
       - Always verify item IDs (6 digits) for tool calls
-      - Check for allergies and dietary restrictions
-      - Suggest items based on user's taste preferences
+      - Always Get items from cart before proceding to checkout
+      - Check for allergies and dietary restrictions before making any food suggestions
+      - Always use the knowledge graph to suggest menu items that fit the user's dietary needs and avoid allergens
+      - If unsure about a user's restrictions, ask before suggesting food
+      - Suggest items based on user's taste preferences and order history
       - Call dependent tools in the right order
+      - Call the dietary suggestion tool when the user asks for recommendations or when making suggestions
 
       If a user mentions food preferences, allergies, or dietary restrictions, make note of them for future recommendations.
       `,
@@ -212,22 +233,19 @@ app.post("/chat", async (c) => {
       getErrorMessage: (error) => {
         if (NoSuchToolError.isInstance(error)) {
           console.log(error);
-          throw new Error("The model tried to call a unknown tool.");
         } else if (InvalidToolArgumentsError.isInstance(error)) {
           console.log(error);
-          throw new Error("The model called a tool with invalid arguments.");
         } else if (ToolExecutionError.isInstance(error)) {
           console.log(error);
-          throw new Error("An error occurred during tool execution.");
         } else {
           console.log(error);
-          throw new Error("An unknown error occurred.");
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw new Error(error as any);
       },
     });
   } catch (error) {
     console.log("THE Error", error);
-    throw error;
   }
 });
 
