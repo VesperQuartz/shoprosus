@@ -12,6 +12,9 @@ export const envSchema = z.object({
   mailPass: z.string(),
   mail: z.string(),
   payStackSecret: z.string(),
+  neo4jUri: z.string(),
+  neo4jUsername: z.string(),
+  neo4jPassword: z.string(),
 });
 
 export const env = envSchema.parse({
@@ -26,4 +29,7 @@ export const env = envSchema.parse({
   mailPass: process.env.MAIL_SECRET || "",
   mail: process.env.GMAIL || "",
   payStackSecret: process.env.PAYSTACK_SECRET || "",
+  neo4jUri: process.env.NEO4J_URI || "",
+  neo4jUsername: process.env.NEO4J_USERNAME || "",
+  neo4jPassword: process.env.NEO4J_PASSWORD || "",
 });

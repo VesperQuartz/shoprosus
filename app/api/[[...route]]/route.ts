@@ -24,6 +24,7 @@ import {
 import to from "await-to-ts";
 import { auth } from "@/lib/auth";
 import { getAvailableRestuarant, getRestuarantMenus } from "@/agents/tools";
+import {} from "@/services/knowlege-graph";
 
 export const runtime = "nodejs";
 
@@ -105,16 +106,16 @@ app.post(
 
 app.post("/webhook", async (c) => {
   const event = await c.req.json();
-  //TODO secure public webhook
   if (event.event === "charge.success") {
     const userId = event.event.metadata.userId;
-    console.log(userId);
     await clearCart(userId);
   }
   return c.json({ message: "webhook recieved" });
 });
 
 app.post("/chat", async (c) => {
+  const user = c.get("user");
+  if (!user) return c.json(null, 401);
   const { messages } = await c.req.json();
   try {
     const result = streamText({
@@ -129,12 +130,12 @@ app.post("/chat", async (c) => {
               z.object({
                 name: z.string(),
                 price: z.number(),
-                image: z.string().nullable(),
+                image: z.string(),
                 quantity: z.number(),
               }),
             ),
           }),
-          description: "Add the list of menu items to cart",
+          description: "Add the list of selected menu items to cart",
           execute: async ({ cart }) => {
             console.log("ED", cart);
             const user = c.get("user");
@@ -162,13 +163,11 @@ app.post("/chat", async (c) => {
         }),
         providePaymentButton: tool({
           parameters: z.object({
-            totalAmount: z.number().describe("Total amount of items in cart"),
+            totalAmount: z.number().describe("Total price of items in cart"),
           }),
           description: "Used to provide payment button for checkout.",
           execute: async ({ totalAmount }) => {
-            console.log("Amount", totalAmount);
             const user = c.get("user");
-            console.log("user-check", user);
             const metadata = {
               userId: user?.id,
             };
@@ -189,34 +188,25 @@ app.post("/chat", async (c) => {
       },
       maxSteps: 3,
       system: `
-      You are an AI assistant for a restaurant, responsible for guiding users through browsing available restaurant options, viewing menu items, and managing their orders. You have the ability to call external tools for tasks such as making reservations or placing orders.
+  You are an AI assistant for a restaurant ordering platform. You help users discover restaurants, browse menus, and manage their orders.
 
-      Your capabilities include:
+      Your capabilities:
+      1. List available restaurants
+      2. Show menu items from specific restaurants
+      3. Add items to cart
+      4. Process payments
+      5. Provide personalized recommendations based on user preferences
 
-        1. Providing a selection of restaurant.
-        2. Presenting detailed menu items from selected restaurants.
-        3. Assisting users in adding items to their cart for an order.
-        4. Offering suggestions if users are uncertain about what to choose.
+      Remember to:
+      - Be friendly and helpful
+      - Ask clarifying questions when needed
+      - Always verify item IDs (6 digits) for tool calls
+      - Check for allergies and dietary restrictions
+      - Suggest items based on user's taste preferences
+      - Call dependent tools in the right order
 
-      Remember to maintain a friendly and helpful tone throughout the interaction. Follow up with clarifying questions if the user’s preferences are not clear. Use external tools when appropriate to assist the user effectively.
-
-      Always make sure to verify the id of items for tools calls, that requires it, The id are mostly six (6) digits
-
-      Some tool call are dependent on some other tool call, So make sure you call those tools first.
-
-      Example dialogue:
-      User: "I'm interested in Something spicy"
-      AI: "Great choice! Do you We have some restuarant that sells spicy foood, would you like me to list them?"
-
-      User: "Show me some menu items"
-      AI: "here are the items, would you be interested in add to your cart?"
-
-      User: "Show me items in my cart"
-      AI: "here are the items in your cart and the total is ...,  would you like to Proceed to payment?"
-
-      User: "Show me items in my cart"
-      AI: "Your cart is empty right now, would you like to add items to it"
-    `,
+      If a user mentions food preferences, allergies, or dietary restrictions, make note of them for future recommendations.
+      `,
     });
     return result.toDataStreamResponse({
       getErrorMessage: (error) => {

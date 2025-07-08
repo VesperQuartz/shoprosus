@@ -20,9 +20,8 @@ export const AddToCartMenuUI = makeAssistantToolUI<
 >({
   toolName: "addMenuItemToCart",
   render: ({ status, result, args }) => {
-    console.log("STATUS", status);
-    console.log("ARGS", args);
-    console.log("RESULT", result);
+    console.log(args, "args");
+    console.log(result, "result");
     if (status.type === "incomplete" && status.error === "error") {
       console.log("INCOMPLETE");
       return <div className="text-red-500">Failed to add item to cart</div>;
@@ -65,7 +64,7 @@ export const AddToCartMenuUI = makeAssistantToolUI<
                   <div className="flex-1 p-2 sm:p-3 flex flex-col justify-center min-w-0">
                     <p
                       className="text-xs sm:text-sm md:text-base font-medium text-white 
-                     line-clamp-2 leading-tight"
+                      leading-tight"
                     >
                       {item.name}
                     </p>

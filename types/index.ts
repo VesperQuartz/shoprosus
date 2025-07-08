@@ -26,4 +26,14 @@ type MenuItem = {
   images: Image[];
 };
 
-export type { MenuItem, Tag, Category, Image };
+type MenuItem2 = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  tags: Tag[];
+  category: Category;
+  images: string;
+};
+export type { MenuItem, MenuItem2, Tag, Category, Image };

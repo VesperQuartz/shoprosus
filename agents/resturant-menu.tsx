@@ -8,7 +8,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { formatToNaira } from "@/lib/utils";
-import { MenuItem } from "@/types";
+import { MenuItem2 } from "@/types";
 import { makeAssistantToolUI } from "@assistant-ui/react";
 import { Loader2Icon } from "lucide-react";
 import Image from "next/image";
@@ -16,7 +16,7 @@ import { match } from "ts-pattern";
 
 export const RestuarantMenuUi = makeAssistantToolUI<
   { name: string; id: number },
-  MenuItem[]
+  MenuItem2[]
 >({
   toolName: "getRestuarantMenus",
   render: ({ status, result, args }) => {
@@ -51,7 +51,7 @@ export const RestuarantMenuUi = makeAssistantToolUI<
                       <CardContent className="p-0 h-full flex flex-col">
                         <div className="h-[70%] w-full">
                           <Image
-                            src={menu?.images?.[0]?.path ?? "/no_image.png"}
+                            src={menu?.images ?? "/no_image.png"}
                             alt={menu?.name ?? ""}
                             className="w-full h-full rounded-t-lg object-cover"
                             width={500}

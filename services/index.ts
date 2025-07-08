@@ -43,7 +43,7 @@ export const getRestuarantMenu = async (id: number) => {
     .map((menu) => ({ ...menu, price: menu.price / 100 }))
     .map((menu) => ({
       id: menu.id,
-      images: menu.images,
+      images: menu.images[0].path,
       name: menu.name,
       tags: menu.tags,
       price: menu.price,

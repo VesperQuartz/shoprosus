@@ -32,3 +32,31 @@ export const getRestuarantMenus = tool({
     return result;
   },
 });
+
+export const updateUserProfile = tool({
+  parameters: z.object({
+    preferences: z.object({
+      cuisines: z.array(z.string()).optional(),
+      allergens: z.array(z.string()).optional(),
+      spiceLevel: z.enum(["mild", "medium", "hot"]).optional(),
+      dietaryRestrictions: z.array(z.string()).optional(),
+      priceRange: z.enum(["budget", "mid-range", "premium"]).optional(),
+    }),
+    reasoning: z.string().describe("Explain what you learned about the user"),
+  }),
+  description: "Update user profile based on conversation insights",
+  execute: async ({ preferences, reasoning }) => {
+    console.log(`Learning: ${reasoning}`);
+    console.log(`preference: ${preferences}`);
+    return { success: true, learned: reasoning };
+  },
+});
+
+export const getPersonalizedSuggestions = tool({
+  parameters: z.object({}).describe("No parameters needed").default({}),
+  description:
+    "Get personalized restaurant recommendations based on user profile",
+  execute: async ({}) => {
+    return { message: "Getting personalized recommendations..." };
+  },
+});
