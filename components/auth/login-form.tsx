@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,9 @@ interface LoginFormProps {
 
 export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = React.useState<
+    { state: boolean; type: string } | undefined
+  >(undefined);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -171,6 +174,7 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
                   <div className="grid grid-cols-2 gap-4">
                     <Button
                       onClick={async () => {
+                        setLoading({ state: true, type: "google" });
                         const [error] = await to(
                           authClient.signIn.social({
                             provider: "google",
@@ -178,7 +182,9 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
                           }),
                         );
                         if (error) {
+                          setLoading({ state: false, type: "google" });
                           toast.error(error.message);
+                          return;
                         }
                       }}
                       type="button"
@@ -204,9 +210,13 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
                         />
                       </svg>
                       Google
+                      {loading?.state && loading.type == "google" && (
+                        <Loader2Icon className="animate-spin" />
+                      )}
                     </Button>
                     <Button
                       onClick={async () => {
+                        setLoading({ state: true, type: "github" });
                         const [error] = await to(
                           authClient.signIn.social({
                             provider: "github",
@@ -214,15 +224,20 @@ export const LoginForm = ({ onSwitchToSignup }: LoginFormProps) => {
                           }),
                         );
                         if (error) {
+                          setLoading({ state: false, type: "github" });
                           toast.error(error.message);
+                          return;
                         }
                       }}
                       type="button"
                       variant="outline"
-                      className="h-12 bg-secondary border-border hover:bg-accent text-foreground"
+                      className="h-12 bg-secondary cursor-pointer border-border hover:bg-accent text-foreground"
                     >
                       <Github className="w-5 h-5 mr-2" />
-                      GitHub
+                      GitHub{" "}
+                      {loading?.state && loading.type == "github" && (
+                        <Loader2Icon className="animate-spin" />
+                      )}
                     </Button>
                   </div>
                 </form>
